@@ -38,6 +38,26 @@ build_container:
     changes:
       - node-lts/Dockerfile
 
+build_container:buster:
+  stage: build
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$VERSION:lts-buster-rc
+  script:
+    - docker build . -f ./node-lts/buster/Dockerfile && \
+      --no-cache --pull -t $IMAGE_TAG
+      --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+      --build-arg CI_JOB_ID=$CI_JOB_ID
+      --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
+      --build-arg VCS_REF=$CI_COMMIT_SHA
+      --build-arg VERSION=$VERSION
+  after_script:
+    - docker push $IMAGE_TAG
+  except:
+    - master
+  only:
+    changes:
+      - node-lts/buster/Dockerfile
+
 build_container:alpine:
   stage: build
   variables:

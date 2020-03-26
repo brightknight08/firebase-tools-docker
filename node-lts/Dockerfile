@@ -1,4 +1,4 @@
-FROM node:lts
+FROM node:lts-alpine
 ARG BUILD_DATE
 ARG CI_JOB_ID
 ARG CI_PIPELINE_ID
@@ -16,8 +16,8 @@ LABEL org.label-schema.schema-version="1.0" \
     ci_pipeline_id=${CI_PIPELINE_ID}
 ENV FIREBASE_TOOLS_VERSION=${VERSION}
 ENV HOME=/home/node
-RUN sudo apt update && \
-    sudo apt install default-jdk && \
+RUN apt update && \
+    apt install default-jdk && \
     yarn global add firebase-tools@${VERSION} && \
     yarn cache clean && \
     firebase setup:emulators:firestore && \
