@@ -50,6 +50,7 @@ build_container:buster:
     --build-arg VCS_REF=$CI_COMMIT_SHA
     --build-arg VERSION=$VERSION
   after_script:
+    - echo $IMAGE_TAG
     - docker push $IMAGE_TAG
   except:
     - master
@@ -69,6 +70,7 @@ build_container:alpine:
       --build-arg VCS_REF=$CI_COMMIT_SHA
       --build-arg VERSION=$VERSION
   after_script:
+    - echo $IMAGE_TAG
     - docker push $IMAGE_TAG
   except:
     - master
