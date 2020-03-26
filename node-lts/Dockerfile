@@ -1,4 +1,4 @@
-FROM node:lts-alpine
+FROM node:lts
 ARG BUILD_DATE
 ARG CI_JOB_ID
 ARG CI_PIPELINE_ID
@@ -17,16 +17,14 @@ LABEL org.label-schema.schema-version="1.0" \
 ENV FIREBASE_TOOLS_VERSION=${VERSION}
 ENV HOME=/home/node
 RUN apt update && \
-    apt install default-jdk && \
+    apt install -y default-jdk && \
     yarn global add firebase-tools@${VERSION} && \
     yarn cache clean && \
     firebase setup:emulators:firestore && \
     firebase setup:emulators:pubsub && \
     firebase setup:emulators:database && \
     firebase -V && \
-    java -version && \
-    mkdir $HOME/.cache && \
-    chown -R node:node $HOME
+    java -version
 USER node
 VOLUME $HOME/.cache
 WORKDIR $HOME
