@@ -18,19 +18,20 @@ variables:
   DOCKER_TLS_CERTDIR: '/certs'
 
 # BUILD THE DOCKER CONTAINER WITH TAGS AND THE ARGUMENTS
-build_container:
+build_container:lts:
   stage: build
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:$VERSION:lts-rc
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-rc-$VERSION
   script:
-    - docker build . -f ./node-lts/Dockerfile && \
-      --no-cache --pull -t $IMAGE_TAG
+    - docker build . --no-cache --pull -t $IMAGE_TAG
+      -f ./node-lts/Dockerfile
       --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
       --build-arg CI_JOB_ID=$CI_JOB_ID
       --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
       --build-arg VCS_REF=$CI_COMMIT_SHA
       --build-arg VERSION=$VERSION
   after_script:
+    - echo $IMAGE_TAG
     - docker push $IMAGE_TAG
   except:
     - master
@@ -41,14 +42,15 @@ build_container:
 build_container:buster:
   stage: build
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:$VERSION-lts-buster-rc
-  script: --no-cache --pull -t $IMAGE_TAG - docker build . && \
-    -f ./node-lts/buster/Dockerfile && \
-    --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-    --build-arg CI_JOB_ID=$CI_JOB_ID
-    --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
-    --build-arg VCS_REF=$CI_COMMIT_SHA
-    --build-arg VERSION=$VERSION
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-buster-rc-$VERSION
+  script:
+    - docker build . --no-cache --pull -t $IMAGE_TAG
+      -f ./node-lts/buster/Dockerfile
+      --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+      --build-arg CI_JOB_ID=$CI_JOB_ID
+      --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
+      --build-arg VCS_REF=$CI_COMMIT_SHA
+      --build-arg VERSION=$VERSION
   after_script:
     - echo $IMAGE_TAG
     - docker push $IMAGE_TAG
@@ -61,7 +63,7 @@ build_container:buster:
 build_container:alpine:
   stage: build
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:$VERSION-lts-alpine-rc
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-alpine-rc-$VERSION
   script:
     - docker build . --no-cache --pull -t $IMAGE_TAG
       --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
