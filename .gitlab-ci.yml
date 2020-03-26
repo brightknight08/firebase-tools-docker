@@ -38,6 +38,7 @@ build_container:lts:
   only:
     changes:
       - node-lts/Dockerfile
+      - ./.gitlab-ci.yml
 
 build_container:buster:
   stage: build
@@ -59,6 +60,7 @@ build_container:buster:
   only:
     changes:
       - node-lts/buster/Dockerfile
+      - ./.gitlab-ci.yml
 
 build_container:alpine:
   stage: build
