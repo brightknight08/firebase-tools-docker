@@ -13,11 +13,16 @@ LABEL org.label-schema.schema-version="1.0" \
   org.label-schema.vcs-url="${CI_PROJECT_URL}" \
   org.label-schema.vcs-ref=${VCS_REF} \
   ci_job_id=${CI_JOB_ID} \
-  ci_pipeline_id=${CI_PIPELINE_ID}
+  ci_pipeline_id=${CI_PIPELINE_ID} \
+  node_version="LTS" \
+  firebase_tools_version=${VERSION}
 ENV FIREBASE_TOOLS_VERSION=${VERSION}
 ENV HOME=/home/node
+ENV DEBIAN_FRONTEND noninteractive
+#     '--> https://github.com/eduwass/docker-node-git
 RUN apt update && \
   apt install -y default-jdk && \
+  apt install -y git && \
   yarn global add firebase-tools@${VERSION} && \
   yarn cache clean && \
   firebase setup:emulators:firestore && \

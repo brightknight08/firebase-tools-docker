@@ -1,69 +1,118 @@
-image: docker:19.03.1
+# * MIT License
 
-services:
-  - docker:19.03.1-dind
+# Copyright (c) 2020 Tim Anthony Manuel
 
-before_script:
-  - docker info # SHOW THE DOCKER INFO FIRST
-  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+# forked from: https://github.com/AndreySenov/firebase-tools-docker
 
-stages:
-  - build
-  - test # WILL BE ADDED SOMETIME
-  - deploy
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
 
-variables:
-  DOCKER_DRIVER: overlay2
-  VERSION: '7.16.1' # FIREBASE-TOOLS VERSION
-  DOCKER_TLS_CERTDIR: '/certs'
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
 
-# BUILD THE DOCKER CONTAINER WITH TAGS AND THE ARGUMENTS
-build_container:lts:
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+default:
+  image: docker:19.03.1
+  services:
+    - docker:19.03.1-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  stages:
+    - build
+    - test # WILL BE ADDED SOMETIME
+    - deploy
+  variables:
+    DOCKER_DRIVER: overlay2
+    VERSION: '7.16.1' # FIREBASE-TOOLS VERSION
+    DOCKER_TLS_CERTDIR: '/certs'
+
+# *---[ TEMPLATE BUILD JOB ]
+.build:template: &build_template
   stage: build
+  script:
+    - docker build . --no-cache --pull -t $IMAGE_TAG
+      -f ${FILE_NAME}
+      --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+      --build-arg CI_JOB_ID=$CI_JOB_ID
+      --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
+      --build-arg VCS_REF=$CI_COMMIT_SHA
+      --build-arg VERSION=$VERSION
+  after_script:
+    - echo Built $IMAGE_TAG
+    - docker push $IMAGE_TAG
+  only:
+    changes:
+      - ${FILE_NAME}
+      - ./.gitlab-ci.yml
+  except:
+    - master
+
+# *---------------------------------------------------------------[ node lts ]
+build_container:lts:
+  <<: *build_template
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-rc-$VERSION
-  script:
-    - docker build . --no-cache --pull -t $IMAGE_TAG
-      -f ./node-lts/Dockerfile
-      --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-      --build-arg CI_JOB_ID=$CI_JOB_ID
-      --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
-      --build-arg VCS_REF=$CI_COMMIT_SHA
-      --build-arg VERSION=$VERSION
-  after_script:
-    - echo $IMAGE_TAG
-    - docker push $IMAGE_TAG
-  except:
-    - master
-  only:
-    changes:
-      - node-lts/Dockerfile
-      - ./.gitlab-ci.yml
+    FILE_NAME: ./node-lts/latest-lts/Dockerfile
 
-build_container:buster:
-  stage: build
+build_container:lts:buster:
+  <<: *build_template # THE BUILD TEMPLATE
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-buster-rc-$VERSION
-  script:
-    - docker build . --no-cache --pull -t $IMAGE_TAG
-      -f ./node-lts/buster/Dockerfile
-      --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-      --build-arg CI_JOB_ID=$CI_JOB_ID
-      --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
-      --build-arg VCS_REF=$CI_COMMIT_SHA
-      --build-arg VERSION=$VERSION
-  after_script:
-    - echo $IMAGE_TAG
-    - docker push $IMAGE_TAG
-  except:
-    - master
-  only:
-    changes:
-      - node-lts/buster/Dockerfile
-      - ./.gitlab-ci.yml
+    FILE_NAME: ./node-lts/latest-lts/buster.Dockerfile
 
+# *---------------------------------------------------------------[ node 12 ]
+build_container:lts:buster:
+  <<: *build_template # THE BUILD TEMPLATE
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:12-buster-rc-$VERSION
+    FILE_NAME: ./node-lts/12/buster.Dockerfile
+
+build_container:lts:buster:
+  <<: *build_template # THE BUILD TEMPLATE
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:12-rc-$VERSION
+    FILE_NAME: ./node-lts/12/Dockerfile
+
+# *---------------------------------------------------------------[ node 10 ]
+build_container:lts:buster:
+  <<: *build_template # THE BUILD TEMPLATE
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:10-buster-rc-$VERSION
+    FILE_NAME: ./node-lts/10/buster.Dockerfile
+
+build_container:lts:buster:
+  <<: *build_template # THE BUILD TEMPLATE
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:10-rc-$VERSION
+    FILE_NAME: ./node-lts/10/Dockerfile
+
+# *---------------------------------------------------------------[ node 8 ]
+build_container:lts:buster:
+  <<: *build_template # THE BUILD TEMPLATE
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:8-buster-rc-$VERSION
+    FILE_NAME: ./node-lts/8/buster.Dockerfile
+
+build_container:lts:buster:
+  <<: *build_template # THE BUILD TEMPLATE
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:8-rc-$VERSION
+    FILE_NAME: ./node-lts/8/Dockerfile
+
+# *----------------------------------------------------[ node lts + alpine ]
 build_container:alpine:
-  stage: build
+  <<: *build_template
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-alpine-rc-$VERSION
   script:
@@ -73,20 +122,18 @@ build_container:alpine:
       --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
       --build-arg VCS_REF=$CI_COMMIT_SHA
       --build-arg VERSION=$VERSION
-  after_script:
-    - echo $IMAGE_TAG
-    - docker push $IMAGE_TAG
-  except:
-    - master
   only:
     changes:
       - Dockerfile
+      - ./.gitlab-ci.yml
 
 # BUILD THE DOCKER CONTAINER WITH TAGS AND THE ARGUMENTS
 build_container:master:
   stage: build
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:$VERSION
+    IMAGE_TAG_ALPINE: $CI_REGISTRY_IMAGE:lts-alpine-rc-$VERSION
+    IMAGE_TAG_BUSTER: $CI_REGISTRY_IMAGE:lts-buster-rc-$VERSION
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-rc-$VERSION
   script:
     - docker build . --no-cache --pull
       -t $IMAGE_TAG
@@ -104,3 +151,4 @@ build_container:master:
     - docker push $IMAGE_TAG:latest
   only:
     - master
+  when: manual
