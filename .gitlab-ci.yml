@@ -42,7 +42,7 @@ variables:
 
 # *---------------------------------------------[ TEMPLATE FOR DEV BUILD JOB ]
 .build:template: &build_template
-  environment: development
+  environment: development/${SUFFIX_TAG}
   stage: build
   script:
     - docker build . --no-cache --pull -t $IMAGE_TAG
@@ -67,70 +67,69 @@ variables:
 
 # *---------------------------------------------------------------[ node lts ]
 build_container:lts:buster:
-  <<: *build_template # THE BUILD TEMPLATE
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-buster-rc-$VERSION
-    SUFFIX_TAG: lts-buster-rc-$VERSION
+    SUFFIX_TAG: lts-buster-rc-${VERSION}
     FILE_NAME: ./node-lts/latest-lts/buster.Dockerfile
+  <<: *build_template # THE BUILD TEMPLATE
 
 build_container:lts:
-  <<: *build_template
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-rc-$VERSION
-    SUFFIX_TAG: lts-rc-$VERSION
+    SUFFIX_TAG: lts-rc-${VERSION}
     FILE_NAME: ./node-lts/latest-lts/Dockerfile
+  <<: *build_template
 
 # *---------------------------------------------------------------[ node 12 ]
 build_container:12:buster:
-  <<: *build_template # THE BUILD TEMPLATE
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:12-buster-rc-$VERSION
-    SUFFIX_TAG: 12-buster-rc-$VERSION
+    SUFFIX_TAG: 12-buster-rc-${VERSION}
     FILE_NAME: ./node-lts/12/buster.Dockerfile
+  <<: *build_template # THE BUILD TEMPLATE
 
 build_container:12:
-  <<: *build_template # THE BUILD TEMPLATE
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:12-rc-$VERSION
-    SUFFIX_TAG: 12-rc-$VERSION
+    SUFFIX_TAG: 12-rc-${VERSION}
     FILE_NAME: ./node-lts/12/Dockerfile
+  <<: *build_template # THE BUILD TEMPLATE
 
 # *---------------------------------------------------------------[ node 10 ]
 build_container:10:buster:
-  <<: *build_template # THE BUILD TEMPLATE
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:10-buster-rc-$VERSION
-    SUFFIX_TAG: 10-buster-rc-$VERSION
+    SUFFIX_TAG: 10-buster-rc-${VERSION}
     FILE_NAME: ./node-lts/10/buster.Dockerfile
+  <<: *build_template # THE BUILD TEMPLATE
 
 build_container:10:
-  <<: *build_template # THE BUILD TEMPLATE
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:10-rc-$VERSION
-    SUFFIX_TAG: 10-rc-$VERSION
+    SUFFIX_TAG: 10-rc-${VERSION}
     FILE_NAME: ./node-lts/10/Dockerfile
+  <<: *build_template # THE BUILD TEMPLATE
 
 # *---------------------------------------------------------------[ node 8 ]
 build_container:8:buster:
-  <<: *build_template # THE BUILD TEMPLATE
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:8-buster-rc-$VERSION
-    SUFFIX_TAG: 8-buster-rc-$VERSION
+    SUFFIX_TAG: 8-buster-rc-${VERSION}
     FILE_NAME: ./node-lts/8/buster.Dockerfile
+  <<: *build_template # THE BUILD TEMPLATE
 
 build_container:8:
-  <<: *build_template # THE BUILD TEMPLATE
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:8-rc-$VERSION
-    SUFFIX_TAG: 8-rc-$VERSION
+    SUFFIX_TAG: 8-rc-${VERSION}
     FILE_NAME: ./node-lts/8/Dockerfile
+  <<: *build_template # THE BUILD TEMPLATE
 
 # *----------------------------------------------------[ node lts + alpine ]
 build_container:alpine:
-  <<: *build_template
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-alpine-rc-$VERSION
-    SUFFIX_TAG: lts-alpine-rc-$VERSION
+    SUFFIX_TAG: lts-alpine-rc-${VERSION}
   script:
     - docker build . --no-cache --pull -t $IMAGE_TAG
       --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
@@ -138,6 +137,7 @@ build_container:alpine:
       --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
       --build-arg VCS_REF=$CI_COMMIT_SHA
       --build-arg VERSION=$VERSION
+  <<: *build_template
   only:
     changes:
       - Dockerfile
@@ -145,7 +145,7 @@ build_container:alpine:
 
 # *-----------------------------------------[ TEMPLATE FOR RELEASE BUILD JOB ]
 .build:release:template: &build_release_template
-  environment: release/$VERSION
+  environment: release/${CI_BUILD_REF_SLUG}
   stage: deploy
   script:
     - docker build . --no-cache --pull -t $IMAGE_TAG
@@ -159,7 +159,6 @@ build_container:alpine:
     - echo Built $IMAGE_TAG
     # TODO: PUT THIS IN A DEPLOY STAGE
     - docker push $IMAGE_TAG # PUSHES TO GITLAB REGISTRY
-    # docker hub
     # RE-TAG FOR DOCKER HUB.
     - docker tag $IMAGE_TAG $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
     - docker tag $IMAGE_TAG $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-latest
@@ -176,76 +175,77 @@ build_container:alpine:
 
 # *---------------------------------------------------------------[ node lts ]
 build_container:release:lts:buster:
-  <<: *build_release_template # THE BUILD TEMPLATE
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-buster-$VERSION
-    SUFFIX_TAG: lts-buster-$VERSION
+    SUFFIX_TAG: lts-buster-${VERSION}
     FILE_NAME: ./node-lts/latest-lts/buster.Dockerfile
+  <<: *build_release_template # THE BUILD TEMPLATE
 
 build_container:release:lts:
-  <<: *build_release_template
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-$VERSION
     SUFFIX_TAG: lts-$VERSION
     FILE_NAME: ./node-lts/latest-lts/Dockerfile
+  <<: *build_release_template
 
 # *---------------------------------------------------------------[ node 12 ]
 build_container:release:12:buster:
-  <<: *build_release_template # THE BUILD TEMPLATE
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:12-buster-$VERSION
     SUFFIX_TAG: 12-buster-$VERSION
     FILE_NAME: ./node-lts/12/buster.Dockerfile
+  <<: *build_release_template # THE BUILD TEMPLATE
 
 build_container:release:12:
-  <<: *build_release_template # THE BUILD TEMPLATE
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:12-$VERSION
     SUFFIX_TAG: 12-$VERSION
     FILE_NAME: ./node-lts/12/Dockerfile
+  <<: *build_release_template # THE BUILD TEMPLATE
 
 # *---------------------------------------------------------------[ node 10 ]
 build_container:release:10:buster:
-  <<: *build_release_template # THE BUILD TEMPLATE
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:10-buster-$VERSION
     SUFFIX_TAG: 10-buster-$VERSION
     FILE_NAME: ./node-lts/10/buster.Dockerfile
+  <<: *build_release_template # THE BUILD TEMPLATE
 
 build_container:release:10:
-  <<: *build_release_template # THE BUILD TEMPLATE
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:10-$VERSION
     SUFFIX_TAG: 10-$VERSION
     FILE_NAME: ./node-lts/10/Dockerfile
+  <<: *build_release_template # THE BUILD TEMPLATE
 
 # *---------------------------------------------------------------[ node 8 ]
 build_container:release:8:buster:
-  <<: *build_release_template # THE BUILD TEMPLATE
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:8-buster-$VERSION
     SUFFIX_TAG: 8-buster-$VERSION
     FILE_NAME: ./node-lts/8/buster.Dockerfile
+  <<: *build_release_template # THE BUILD TEMPLATE
 
 build_container:release:8:
-  <<: *build_release_template # THE BUILD TEMPLATE
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:8-$VERSION
     SUFFIX_TAG: 8-buster-$VERSION
     FILE_NAME: ./node-lts/8/Dockerfile
+  <<: *build_release_template # THE BUILD TEMPLATE
 
 # *----------------------------------------------------[ node lts + alpine ]
 build_container:release:alpine:
-  <<: *build_release_template
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-alpine-$VERSION
+    SUFFIX_TAG: alpine-$VERSION
   script:
-    - docker build . --no-cache --pull -t $IMAGE_TAG
+    - docker build . --no-cache --pull -t $IMAGE_TAG -t $IMAGE_TAG-latest
       --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
       --build-arg CI_JOB_ID=$CI_JOB_ID
       --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
       --build-arg VCS_REF=$CI_COMMIT_SHA
       --build-arg VERSION=$VERSION
+  <<: *build_release_template
   only:
     changes:
       - Dockerfile
