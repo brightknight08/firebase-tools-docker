@@ -1,8 +1,9 @@
 MIT License
 
-Copyright (c) 2019-2020 Andrey Senov
+Copyright (c) 2020 Tim Anthony Manuel
 
-https://github.com/AndreySenov/firebase-tools-docker
+Original Copyright (c) 2019-2020 Andrey Senov
+forked from https://github.com/AndreySenov/firebase-tools-docker
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
