@@ -239,7 +239,7 @@ build_container:release:8:buster:
 build_container:release:8:
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:8-$VERSION
-    SUFFIX_TAG: 8-buster
+    SUFFIX_TAG: 8
     FILE_NAME: ./node-lts/8/Dockerfile
   <<: *build_release_template # THE BUILD TEMPLATE
 
