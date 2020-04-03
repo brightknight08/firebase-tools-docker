@@ -36,7 +36,7 @@ stages:
 
 variables:
   DOCKER_DRIVER: overlay2
-  VERSION: '7.16.1' # FIREBASE-TOOLS VERSION
+  VERSION: '8.0.1' # FIREBASE-TOOLS VERSION
   DOCKER_TLS_CERTDIR: '/certs'
   DOCKER_HUB_ORG: thirddegreeapps
 
