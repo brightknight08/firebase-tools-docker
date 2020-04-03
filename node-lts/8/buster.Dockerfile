@@ -28,6 +28,7 @@ RUN apt update && \
   firebase setup:emulators:firestore && \
   firebase setup:emulators:pubsub && \
   firebase setup:emulators:database && \
+  npm rebuild && \
   firebase -V && \
   java -version && \
   chown -R node:node $HOME

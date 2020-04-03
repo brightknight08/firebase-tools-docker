@@ -19,6 +19,7 @@ ENV HOME=/home/node
 RUN apk --no-cache add openjdk11-jre && \
     yarn global add firebase-tools@${VERSION} && \
     yarn cache clean && \
+    npm rebuild && \
     firebase -V && \
     java -version && \
     mkdir $HOME/.cache && \
