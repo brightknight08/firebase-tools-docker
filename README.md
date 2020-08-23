@@ -12,7 +12,7 @@
 
 [![NodeJS](https://img.shields.io/badge/nodejs-8,%2010,%2012,%20LTS-3c873a?style=for-the-badge&logo=node.js&labelColor=112)](https://nodejs.org
 "NodeJS")
-[![Firebase-tools](https://img.shields.io/badge/firebase--tools-7.16.1-ea3b00?style=for-the-badge&logo=firebase&labelColor=112)](https://www.npmjs.com/package/firebase-tools "Firebase-tools")
+[![Firebase-tools](https://img.shields.io/badge/firebase--tools-8.9.0-ea3b00?style=for-the-badge&logo=firebase&labelColor=112)](https://www.npmjs.com/package/firebase-tools "Firebase-tools")
 [![Docker](https://img.shields.io/badge/USED%20FOR%20-docker-blue?style=for-the-badge&logo=docker&labelColor=112)](https://www.docker.com/ "Docker")
 [![Gitlab](https://img.shields.io/badge/CI%2FCD%20by-gitlab-ea3b00?style=for-the-badge&logo=gitlab&labelColor=112)](https://gitlab.com/ "Gitlab")
 [![OpenJDK](https://img.shields.io/badge/OpenJDK-11-ea3b00?style=for-the-badge&labelColor=111)](https://openjdk.java.net/ "OpenJDK")
