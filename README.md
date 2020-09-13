@@ -12,17 +12,16 @@
 
 [![NodeJS](https://img.shields.io/badge/nodejs-8,%2010,%2012,%20LTS-3c873a?style=for-the-badge&logo=node.js&labelColor=112)](https://nodejs.org
 "NodeJS")
-[![Firebase-tools](https://img.shields.io/badge/firebase--tools-8.9.0-ea3b00?style=for-the-badge&logo=firebase&labelColor=112)](https://www.npmjs.com/package/firebase-tools "Firebase-tools")
+[![Firebase-tools](https://img.shields.io/badge/firebase--tools-8.10.0-ea3b00?style=for-the-badge&logo=firebase&labelColor=112)](https://www.npmjs.com/package/firebase-tools "Firebase-tools")
 [![Docker](https://img.shields.io/badge/USED%20FOR%20-docker-blue?style=for-the-badge&logo=docker&labelColor=112)](https://www.docker.com/ "Docker")
 [![Gitlab](https://img.shields.io/badge/CI%2FCD%20by-gitlab-ea3b00?style=for-the-badge&logo=gitlab&labelColor=112)](https://gitlab.com/ "Gitlab")
 [![OpenJDK](https://img.shields.io/badge/OpenJDK-11-ea3b00?style=for-the-badge&labelColor=111)](https://openjdk.java.net/ "OpenJDK")
-
 
 ## what's inside
 
 - node (8, 10, 12, latest lts) + npm
 - yarn
-- Firebase-tools
+- Firebase-tools 8.10.0
 - git
 - OpenJDK 11 (default-jdk)
 
@@ -34,13 +33,13 @@
   **[in this directory](./node-lts/)**
 - Do you want to contribute? Or suggest features, improvements, etc? Find
   the [contributing mini-guide here](./CONTRIBUTING.md)
-- here's what the image **[firebase-tools-docker:10-buster-rc-7.16.1](registry.gitlab.com/timanthony/firebase-tools-docker:10-buster-rc-7.16.1)**
+- here's what the image **[firebase-tools-docker:10-buster-rc-8.10.0](registry.gitlab.com/timanthony/firebase-tools-docker:10-buster-rc-8.10.0)**
   means:
   - **firebase-tools-docker**: the name
   - **10**: node version
   - **buster**: Debian buster
   - **rc**: release candidate
-  - **7.16.1**: firebase-tools version
+  - **8.10.0**: firebase-tools version
 - [mirrored github repo](https://github.com/brightknight08/firebase-tools-docker)
 - [gitlab main repo](https://gitlab.com/timanthony/firebase-tools-docker)
 
