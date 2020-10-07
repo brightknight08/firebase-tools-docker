@@ -38,7 +38,7 @@
     - echo Built $IMAGE_TAG
     - echo for docker $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-dev
       # TODO: REMOVE THIS LATER
-    # PUSH IMAGE TO GITLAB REGISTRY
+    # PUSH IMAGE TO GITLAB REGISTRY SO IT CAN BE RETRIEVED IN LATER STAGES
     - docker push $IMAGE_TAG-dev-$VERSION
   rules:
     - if: $CI_COMMIT_BRANCH =~ /^release+(\/|-).+$/
@@ -51,9 +51,8 @@
       when: always
     - changes:
         - ${FILE_NAME}
-        - .gitlab-ci.yml
-        when: always
-    when: never
+        - '.gitlab-ci.yml'
+      when: always
 
 # *---------------------------------------------------------------[ node lts ]
 build_container:lts:buster:rc:
