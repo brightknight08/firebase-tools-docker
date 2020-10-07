@@ -78,4 +78,4 @@ variables:
 include:
   - local: .gitlab/ci/builds.gitlab-ci.yml # BUILD JOBS
   - local: .gitlab/ci/deploy.gitlab-ci.yml # DEPLOYMENT JOBS
-  - local: .gitlab/ci/release.gitlab-ci.yml # RELEASE JOBS
+  # - local: .gitlab/ci/release.gitlab-ci.yml # RELEASE JOBS

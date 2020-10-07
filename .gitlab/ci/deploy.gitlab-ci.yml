@@ -1,35 +1,41 @@
 # *-----------------------------------------[ TEMPLATE FOR DEPLOY BUILD JOB ]
 deploy:template: &deploy_template
-  environment: deploy/${SUFFIX_TAG}-${VERSION}
   stage: deploy
+  variables:
+    # `DEV_IMAGE_TAG` IS THE TAG USED IN THE BUILD STAGE. NOTICE THE -dev-
+    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
+    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
   script:
-    - docker --pull -t $IMAGE_TAG
+    - docker --pull -t $DEV_IMAGE_TAG
   after_script:
-    - echo Built $IMAGE_TAG
+    - echo Pulled $DEV_IMAGE_TAG
     # TODO: PUT THIS IN A DEPLOY STAGE
-    - docker push $IMAGE_TAG # PUSHES TO GITLAB REGISTRY
+    # - docker push $IMAGE_TAG # PUSHES TO GITLAB REGISTRY
     # RE-TAG FOR DOCKER HUB.
-    - DOCKER_HUB_IMAGE_TAG=$DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
-    - docker tag $IMAGE_TAG $DOCKER_HUB_IMAGE_TAG
-    - docker tag $IMAGE_TAG $DOCKER_HUB_IMAGE_TAG-latest
+    - docker tag $DEV_IMAGE_TAG $DOCKER_HUB_IMAGE_TAG
+    - docker tag $DEV_IMAGE_TAG $DOCKER_HUB_IMAGE_TAG-latest
     - docker login -u $DOCKER_USER -p $DOCKER_TOKEN
+    # THEN PUSH BOTH
     - docker push $DOCKER_HUB_IMAGE_TAG
     - docker push $$DOCKER_HUB_IMAGE_TAG-latest
-  only:
-    refs:
-      - /^staging+(\/|-).+$/
+  rules:
+    # IF COMMIT TAG IS RELEASE WITH MAJOR.MINOR.PATCH https://regexr.com/51ap2
+    - if: $CI_COMMIT_TAG =~ /^release(\/|-)+(|v)(0|[1-9]\d*).(0|[1-9]\d*)\.(0|[1-9]\d*)$/
+      when: manual
+    - if: $CI_COMMIT_TAG =~ /^(|v)(0|[1-9]\d*).(0|[1-9]\d*)\.(0|[1-9]\d*)$/
+      when: manual
 
 # *---------------------------------------------------------------[ node lts ]
 deploy:lts:buster:
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-buster-$VERSION
+    # DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-buster-dev-$VERSION
     SUFFIX_TAG: lts-buster
     FILE_NAME: ./node-lts/latest-lts/buster.Dockerfile
   <<: *deploy_template # THE BUILD TEMPLATE
 
 deploy:lts:
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-$VERSION
+    # IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-$VERSION
     SUFFIX_TAG: lts
     FILE_NAME: ./node-lts/latest-lts/Dockerfile
   <<: *deploy_template
@@ -37,14 +43,14 @@ deploy:lts:
 # *---------------------------------------------------------------[ node 12 ]
 deploy:12:buster:
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:12-buster-$VERSION
+    # IMAGE_TAG: $CI_REGISTRY_IMAGE:12-buster-$VERSION
     SUFFIX_TAG: 12-buster
     FILE_NAME: ./node-lts/12/buster.Dockerfile
   <<: *deploy_template # THE BUILD TEMPLATE
 
 deploy:12:
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:12-$VERSION
+    # IMAGE_TAG: $CI_REGISTRY_IMAGE:12-$VERSION
     SUFFIX_TAG: 12
     FILE_NAME: ./node-lts/12/Dockerfile
   <<: *deploy_template # THE BUILD TEMPLATE
@@ -52,14 +58,14 @@ deploy:12:
 # *---------------------------------------------------------------[ node 10 ]
 deploy:10:buster:
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:10-buster-$VERSION
+    # IMAGE_TAG: $CI_REGISTRY_IMAGE:10-buster-$VERSION
     SUFFIX_TAG: 10-buster
     FILE_NAME: ./node-lts/10/buster.Dockerfile
   <<: *deploy_template # THE BUILD TEMPLATE
 
 deploy:10:
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:10-$VERSION
+    # IMAGE_TAG: $CI_REGISTRY_IMAGE:10-$VERSION
     SUFFIX_TAG: 10
     FILE_NAME: ./node-lts/10/Dockerfile
   <<: *deploy_template # THE BUILD TEMPLATE
@@ -67,7 +73,7 @@ deploy:10:
 # *---------------------------------------------------------------[ node 8 ]
 deploy:8:buster:
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:8-buster-$FIREBASE_TOOLS_VERSION_NODE_8
+    # IMAGE_TAG: $CI_REGISTRY_IMAGE:8-buster-$FIREBASE_TOOLS_VERSION_NODE_8
     SUFFIX_TAG: 8-buster
     FILE_NAME: ./node-lts/8/buster.Dockerfile
     VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
@@ -75,7 +81,7 @@ deploy:8:buster:
 
 deploy:8:
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:8-$FIREBASE_TOOLS_VERSION_NODE_8
+    # IMAGE_TAG: $CI_REGISTRY_IMAGE:8-$FIREBASE_TOOLS_VERSION_NODE_8
     SUFFIX_TAG: 8
     FILE_NAME: ./node-lts/8/Dockerfile
     VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
@@ -86,7 +92,7 @@ deploy:lts:alpine:
   environment: staging/lts-alpine-${VERSION}
   stage: deploy
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-alpine-$VERSION
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-alpine-dev-$VERSION
     SUFFIX_TAG: lts-alpine
   script:
     - docker build . --no-cache --pull
