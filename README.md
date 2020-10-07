@@ -54,6 +54,12 @@ on a weekly basis to keep the other installed softwares up-to-date.
 **multiple node versions are provided because Firebase Cloud Functions require
 either node-8 or node-10.**
 
+#### nodejs 8
+
+Firebase-tools v8.12.0 no longer supports (or its dependencies) NodeJs 8. Although
+NodeJs 8 is still supported, it will be stuck on **Firebase-tools v8.10.0** from
+now on.
+
 ## credits
 
 HUUUGE, huge thanks to [Andrey Senov](https://github.com/AndreySenov) for the original project in
