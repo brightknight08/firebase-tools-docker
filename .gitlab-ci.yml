@@ -27,8 +27,6 @@ default:
   image: docker:19.03.1
   services:
     - docker:19.03.1-dind
-  before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   # All jobs are interruptible by default
   interruptible: true
 
@@ -41,7 +39,7 @@ workflow:
     - if: '$CI_COMMIT_TITLE =~ /^DOCS:\ +.*$/i' # COMMIT TITLE STARTSWITH DOCS:
       when: never # DONT TRIGGER PIPELINE ON DOCS
     - if: '$CI_COMMIT_TITLE =~ /^FORCES-CI:+.*$/i' # FORCE CI
-    - if: '$CI_COMMIT_BRANCH =~ /\d\-+.*$/' # STARTSWITH DIGIT (ISSUE BRANCH)
+    - if: '$CI_COMMIT_BRANCH =~ /([1-9]\d*)+\-+[\w(\-)]*$/' # STARTSWITH DIGIT (ISSUE BRANCH)
     # For merge requests, create a pipeline.
     - if: '$CI_MERGE_REQUEST_IID'
     # For `master` branch, create a pipeline (this includes on schedules,
@@ -54,6 +52,7 @@ workflow:
     - if: '$CI_COMMIT_BRANCH =~ /^release+(\/|-)+.*$/' # FOR RELEASES
     - if: '$CI_COMMIT_BRANCH =~ /^production+(\/|-)+.*$/' # FOR PRODUCTION
     - if: '$CI_COMMIT_BRANCH =~ /^staging+(\/|-)+.*$/' # FOR STAGING
+    - if: '$CI_COMMIT_BRANCH =~ /([1-9]\d*)+\-+[\w(\-)]*$/'
     - if: '$CI_COMMIT_MESSAGE  =~ / force-run-all /' # THE MAGIC WORD
     - when: always
 
@@ -69,8 +68,8 @@ stages:
 # !---------------------------------------------[ THE VARIABLES FOR THE CI ]---|
 variables:
   DOCKER_DRIVER: overlay2
-  VERSION: '8.12.0' # FIREBASE-TOOLS VERSION FOR NODEJS >10
-  FIREBASE_TOOLS_VERSION_NODE_8: '8.10.0' # FIREBASE-TOOLS VERSION FOR NODEJS 8
+  # VERSION: '8.12.0' # FIREBASE-TOOLS VERSION FOR NODEJS >10
+  # FIREBASE_TOOLS_VERSION_NODE_8: '8.10.0' # FIREBASE-TOOLS VERSION FOR NODEJS 8
   DOCKER_TLS_CERTDIR: '/certs'
   DOCKER_HUB_ORG: thirddegreeapps
 

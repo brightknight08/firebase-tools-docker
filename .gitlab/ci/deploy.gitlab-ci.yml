@@ -1,10 +1,18 @@
 # *-----------------------------------------[ TEMPLATE FOR DEPLOY BUILD JOB ]
 deploy:template: &deploy_template
   stage: deploy
-  variables:
+  # variables:
     # `DEV_IMAGE_TAG` IS THE TAG USED IN THE BUILD STAGE. NOTICE THE -dev-
-    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
-    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
+    # DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
+    # DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
+  before_script:
+    # GET THE VERSION OF FIREBASE TOOLS FROM FILE
+    - VERSION=`cat FIREBASE_TOOLS_VERSION`
+    - echo FIREBASE_TOOLS_VERSION $VERSION
+    - DEV_IMAGE_TAG=$CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
+    - DOCKER_HUB_IMAGE_TAG=$DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
+    - echo DEV_IMAGE_TAG $DEV_IMAGE_TAG
+    - echo DOCKER_HUB_IMAGE_TAG $DOCKER_HUB_IMAGE_TAG
   script:
     - docker pull $DEV_IMAGE_TAG
   after_script:
@@ -76,6 +84,11 @@ deploy:8:buster:
     FILE_NAME: ./node-lts/8/buster.Dockerfile
     VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
   <<: *deploy_template # THE BUILD TEMPLATE
+  before_script:
+    # GET THE VERSION OF FIREBASE TOOLS FROM FILE
+    - VERSION=`cat FIREBASE_TOOLS_VERSION_NODE_8`
+    - echo FIREBASE_TOOLS_VERSION $VERSION
+    - echo BUILDING $IMAGE_TAG
 
 deploy:8:
   variables:
@@ -84,6 +97,11 @@ deploy:8:
     FILE_NAME: ./node-lts/8/Dockerfile
     VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
   <<: *deploy_template # THE BUILD TEMPLATE
+  before_script:
+    # GET THE VERSION OF FIREBASE TOOLS FROM FILE
+    - VERSION=`cat FIREBASE_TOOLS_VERSION_NODE_8`
+    - echo FIREBASE_TOOLS_VERSION $VERSION
+    - echo BUILDING $IMAGE_TAG
 
 # *----------------------------------------------------[ node lts + alpine ]
 deploy:lts:alpine:
@@ -92,6 +110,10 @@ deploy:lts:alpine:
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-alpine-dev-$VERSION
     SUFFIX_TAG: lts-alpine
+  before_script:
+    # GET THE VERSION OF FIREBASE TOOLS FROM FILE
+    - VERSION=`cat FIREBASE_TOOLS_VERSION`
+    - echo FIREBASE_TOOLS_VERSION $VERSION
   script:
     - docker build . --no-cache --pull
       -t $IMAGE_TAG -t $IMAGE_TAG-latest
