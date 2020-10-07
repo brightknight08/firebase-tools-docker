@@ -36,7 +36,8 @@ stages:
 
 variables:
   DOCKER_DRIVER: overlay2
-  VERSION: '8.12.0' # FIREBASE-TOOLS VERSION
+  VERSION: '8.12.0' # FIREBASE-TOOLS VERSION FOR NODEJS >10
+  FIREBASE_TOOLS_VERSION_NODE_8: '8.10.0' # FIREBASE-TOOLS VERSION FOR NODEJS 8
   DOCKER_TLS_CERTDIR: '/certs'
   DOCKER_HUB_ORG: thirddegreeapps
 
@@ -113,16 +114,18 @@ build_container:10:rc:
 # *---------------------------------------------------------------[ node 8 ]
 build_container:8:buster:rc:
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:8-buster-rc-$VERSION
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:8-buster-rc-$FIREBASE_TOOLS_VERSION_NODE_8
     SUFFIX_TAG: 8-buster-rc
     FILE_NAME: ./node-lts/8/buster.Dockerfile
+    VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
   <<: *build_template # THE BUILD TEMPLATE
 
 build_container:8:rc:
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:8-rc-$VERSION
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:8-rc-$FIREBASE_TOOLS_VERSION_NODE_8
     SUFFIX_TAG: 8-rc
     FILE_NAME: ./node-lts/8/Dockerfile
+    VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
   <<: *build_template # THE BUILD TEMPLATE
 
 # *----------------------------------------------------[ node lts + alpine ]
@@ -231,16 +234,18 @@ build_container:release:10:
 # *---------------------------------------------------------------[ node 8 ]
 build_container:release:8:buster:
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:8-buster-$VERSION
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:8-buster-$FIREBASE_TOOLS_VERSION_NODE_8
     SUFFIX_TAG: 8-buster
     FILE_NAME: ./node-lts/8/buster.Dockerfile
+    VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
   <<: *build_release_template # THE BUILD TEMPLATE
 
 build_container:release:8:
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:8-$VERSION
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:8-$FIREBASE_TOOLS_VERSION_NODE_8
     SUFFIX_TAG: 8
     FILE_NAME: ./node-lts/8/Dockerfile
+    VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
   <<: *build_release_template # THE BUILD TEMPLATE
 
 # *----------------------------------------------------[ node lts + alpine ]
