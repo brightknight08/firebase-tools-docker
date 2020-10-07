@@ -1,0 +1,146 @@
+# * MIT License
+
+# Copyright (c) 2020 Tim Anthony Manuel
+
+# forked from: https://github.com/AndreySenov/firebase-tools-docker
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# *--------------------------------------------[ TEMPLATE FOR DEV BUILD JOB ]--|
+.build:template:
+  &build_template # environment: development/${SUFFIX_TAG}-${VERSION}
+  stage: build
+  script:
+    - docker build . --no-cache --pull -t $IMAGE_TAG-dev-$VERSION
+      -f ${FILE_NAME}
+      --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+      --build-arg CI_JOB_ID=$CI_JOB_ID
+      --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
+      --build-arg VCS_REF=$CI_COMMIT_SHA
+      --build-arg VERSION=$VERSION
+  after_script:
+    - echo Built $IMAGE_TAG
+    - echo for docker $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-dev
+      # TODO: REMOVE THIS LATER
+    # PUSH IMAGE TO GITLAB REGISTRY
+    - docker push $IMAGE_TAG-dev-$VERSION
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ /^release+(\/|-).+$/
+      when: never
+    - if: $CI_COMMIT_BRANCH =~ /^production+(\/|-).+$/
+      when: never
+    - if: $CI_COMMIT_BRANCH =~ /^staging+(\/|-).+$/
+      when: never
+    - if: $CI_COMMIT_BRANCH =~ /\d+\-+[\w(\-|.)]*$/
+      when: always
+    - changes:
+        - ${FILE_NAME}
+        - .gitlab-ci.yml
+        when: always
+    when: never
+
+# *---------------------------------------------------------------[ node lts ]
+build_container:lts:buster:rc:
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-buster
+    SUFFIX_TAG: lts-buster
+    FILE_NAME: ./node-lts/latest-lts/buster.Dockerfile
+  <<: *build_template # THE BUILD TEMPLATE
+
+build_container:lts:rc:
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts
+    SUFFIX_TAG: lts
+    FILE_NAME: ./node-lts/latest-lts/Dockerfile
+  <<: *build_template
+
+# *---------------------------------------------------------------[ node 12 ]
+build_container:12:buster:rc:
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:12-buster
+    SUFFIX_TAG: 12-buster
+    FILE_NAME: ./node-lts/12/buster.Dockerfile
+  <<: *build_template # THE BUILD TEMPLATE
+
+build_container:12:rc:
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:12
+    SUFFIX_TAG: 12
+    FILE_NAME: ./node-lts/12/Dockerfile
+  <<: *build_template # THE BUILD TEMPLATE
+
+# *---------------------------------------------------------------[ node 10 ]
+build_container:10:buster:rc:
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:10-buster
+    SUFFIX_TAG: 10-buster
+    FILE_NAME: ./node-lts/10/buster.Dockerfile
+  <<: *build_template # THE BUILD TEMPLATE
+
+build_container:10:rc:
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:10
+    SUFFIX_TAG: 10
+    FILE_NAME: ./node-lts/10/Dockerfile
+  <<: *build_template # THE BUILD TEMPLATE
+
+# *---------------------------------------------------------------[ node 8 ]
+build_container:8:buster:rc:
+  variables:
+    VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:8-buster
+    SUFFIX_TAG: 8-buster
+    FILE_NAME: ./node-lts/8/buster.Dockerfile
+  <<: *build_template # THE BUILD TEMPLATE
+
+build_container:8:rc:
+  variables:
+    VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:8
+    SUFFIX_TAG: 8
+    FILE_NAME: ./node-lts/8/Dockerfile
+  <<: *build_template # THE BUILD TEMPLATE
+
+# *----------------------------------------------------[ node lts + alpine ]
+build_container:lts:alpine:rc:
+  # environment: development/lts-alpine-rc-${VERSION}
+  stage: build
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-alpine-dev-$VERSION
+    SUFFIX_TAG: lts-alpine-dev
+  script:
+    - docker build . --no-cache --pull -t $IMAGE_TAG
+      --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+      --build-arg CI_JOB_ID=$CI_JOB_ID
+      --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
+      --build-arg VCS_REF=$CI_COMMIT_SHA
+      --build-arg VERSION=$VERSION
+  after_script:
+    - echo Built $IMAGE_TAG
+    - echo for docker $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
+      # TODO: REMOVE THIS LATER
+    # PUSH IMAGE TO GITLAB REGISTRY
+    - docker push $IMAGE_TAG
+  only:
+    changes:
+      - Dockerfile
+      - .gitlab-ci.yml
+  except:
+    - /^release+(\/|-).+$/
+#! ---------------------------------------------------------------------[ END ]-

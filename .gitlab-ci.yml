@@ -22,18 +22,51 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# !-------------------------------------------------------------[ DEFAULTS ]---|
 default:
   image: docker:19.03.1
   services:
     - docker:19.03.1-dind
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  # All jobs are interruptible by default
+  interruptible: true
 
+# !-------------------------------------------------------[ WORKFLOW RULES ]---|
+# CONTROL THE CREATION OF PIPELINES
+workflow:
+  rules:
+    - if: '$CI_COMMIT_TITLE =~ /^WIP:\ +.*$/i' # COMMIT TITLE STARTSWITH WIP:
+      when: never # DONT TRIGGER PIPELINE ON WIPS
+    - if: '$CI_COMMIT_TITLE =~ /^DOCS:\ +.*$/i' # COMMIT TITLE STARTSWITH DOCS:
+      when: never # DONT TRIGGER PIPELINE ON DOCS
+    - if: '$CI_COMMIT_TITLE =~ /^FORCES-CI:+.*$/i' # FORCE CI
+    - if: '$CI_COMMIT_BRANCH =~ /\d\-+.*$/' # STARTSWITH DIGIT (ISSUE BRANCH)
+    # For merge requests, create a pipeline.
+    - if: '$CI_MERGE_REQUEST_IID'
+    # For `master` branch, create a pipeline (this includes on schedules,
+    # pushes, merges, etc.).
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    # For tags, create a pipeline.
+    - if: '$CI_COMMIT_TAG'
+    # For stable, auto-deploy, and security branches, create a pipeline.
+    - if: '$CI_COMMIT_BRANCH =~ /^[\d-]+-stable(-ee)?$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^release+(\/|-)+.*$/' # FOR RELEASES
+    - if: '$CI_COMMIT_BRANCH =~ /^production+(\/|-)+.*$/' # FOR PRODUCTION
+    - if: '$CI_COMMIT_BRANCH =~ /^staging+(\/|-)+.*$/' # FOR STAGING
+    - if: '$CI_COMMIT_MESSAGE  =~ / force-run-all /' # THE MAGIC WORD
+    - when: always
+
+# !-----------------------------------------------------[ THE BUILD STAGES ]---|
 stages:
-  - build
-  - test # WILL BE ADDED SOMETIME
-  - deploy
+  - pre_build #~ WILL BE ADDED SOMETIME
+  - build # BUILDS THE DOCKER IMAGES
+  - test #~ WILL BE ADDED SOMETIME
+  - deploy # DEPLOY TO STAGING SERVER
+  - release # RELEASE TO DOCKER HUB
+  - communicate # FOR SENDING NOTIFICATIONS/EMAILS/ETC AFTER #?DEPLOY/RELEASE
 
+# !---------------------------------------------[ THE VARIABLES FOR THE CI ]---|
 variables:
   DOCKER_DRIVER: overlay2
   VERSION: '8.12.0' # FIREBASE-TOOLS VERSION FOR NODEJS >10
@@ -41,243 +74,8 @@ variables:
   DOCKER_TLS_CERTDIR: '/certs'
   DOCKER_HUB_ORG: thirddegreeapps
 
-# *---------------------------------------------[ TEMPLATE FOR DEV BUILD JOB ]
-.build:template: &build_template
-  environment: development/${SUFFIX_TAG}-${VERSION}
-  stage: build
-  script:
-    - docker build . --no-cache --pull -t $IMAGE_TAG
-      -f ${FILE_NAME}
-      --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-      --build-arg CI_JOB_ID=$CI_JOB_ID
-      --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
-      --build-arg VCS_REF=$CI_COMMIT_SHA
-      --build-arg VERSION=$VERSION
-  after_script:
-    - echo Built $IMAGE_TAG
-    - echo for docker $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
-      # TODO: REMOVE THIS LATER
-    # PUSH IMAGE TO GITLAB REGISTRY
-    - docker push $IMAGE_TAG # TODO: PUT THIS IN A DEPLOY STAGE
-  only:
-    changes:
-      - ${FILE_NAME}
-      - .gitlab-ci.yml
-  except:
-    - /^release+(\/|-).+$/
-
-# *---------------------------------------------------------------[ node lts ]
-build_container:lts:buster:rc:
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-buster-rc-$VERSION
-    SUFFIX_TAG: lts-buster-rc
-    FILE_NAME: ./node-lts/latest-lts/buster.Dockerfile
-  <<: *build_template # THE BUILD TEMPLATE
-
-build_container:lts:rc:
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-rc-$VERSION
-    SUFFIX_TAG: lts-rc
-    FILE_NAME: ./node-lts/latest-lts/Dockerfile
-  <<: *build_template
-
-# *---------------------------------------------------------------[ node 12 ]
-build_container:12:buster:rc:
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:12-buster-rc-$VERSION
-    SUFFIX_TAG: 12-buster-rc
-    FILE_NAME: ./node-lts/12/buster.Dockerfile
-  <<: *build_template # THE BUILD TEMPLATE
-
-build_container:12:rc:
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:12-rc-$VERSION
-    SUFFIX_TAG: 12-rc
-    FILE_NAME: ./node-lts/12/Dockerfile
-  <<: *build_template # THE BUILD TEMPLATE
-
-# *---------------------------------------------------------------[ node 10 ]
-build_container:10:buster:rc:
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:10-buster-rc-$VERSION
-    SUFFIX_TAG: 10-buster-rc
-    FILE_NAME: ./node-lts/10/buster.Dockerfile
-  <<: *build_template # THE BUILD TEMPLATE
-
-build_container:10:rc:
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:10-rc-$VERSION
-    SUFFIX_TAG: 10-rc
-    FILE_NAME: ./node-lts/10/Dockerfile
-  <<: *build_template # THE BUILD TEMPLATE
-
-# *---------------------------------------------------------------[ node 8 ]
-build_container:8:buster:rc:
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:8-buster-rc-$FIREBASE_TOOLS_VERSION_NODE_8
-    SUFFIX_TAG: 8-buster-rc
-    FILE_NAME: ./node-lts/8/buster.Dockerfile
-    VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
-  <<: *build_template # THE BUILD TEMPLATE
-
-build_container:8:rc:
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:8-rc-$FIREBASE_TOOLS_VERSION_NODE_8
-    SUFFIX_TAG: 8-rc
-    FILE_NAME: ./node-lts/8/Dockerfile
-    VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
-  <<: *build_template # THE BUILD TEMPLATE
-
-# *----------------------------------------------------[ node lts + alpine ]
-build_container:lts:alpine:rc:
-  environment: development/lts-alpine-rc-${VERSION}
-  stage: build
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-alpine-rc-$VERSION
-    SUFFIX_TAG: lts-alpine-rc
-  script:
-    - docker build . --no-cache --pull -t $IMAGE_TAG
-      --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-      --build-arg CI_JOB_ID=$CI_JOB_ID
-      --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
-      --build-arg VCS_REF=$CI_COMMIT_SHA
-      --build-arg VERSION=$VERSION
-  after_script:
-    - echo Built $IMAGE_TAG
-    - echo for docker $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
-      # TODO: REMOVE THIS LATER
-    # PUSH IMAGE TO GITLAB REGISTRY
-    - docker push $IMAGE_TAG # TODO: PUT THIS IN A DEPLOY STAGE
-  only:
-    changes:
-      - Dockerfile
-      - .gitlab-ci.yml
-  except:
-    - /^release+(\/|-).+$/
-
-# *-----------------------------------------[ TEMPLATE FOR RELEASE BUILD JOB ]
-.build:release:template: &build_release_template
-  environment: release/${SUFFIX_TAG}-${VERSION}
-  stage: deploy
-  script:
-    - docker build . --no-cache --pull -t $IMAGE_TAG
-      -f ${FILE_NAME}
-      --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-      --build-arg CI_JOB_ID=$CI_JOB_ID
-      --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
-      --build-arg VCS_REF=$CI_COMMIT_SHA
-      --build-arg VERSION=$VERSION
-  after_script:
-    - echo Built $IMAGE_TAG
-    # TODO: PUT THIS IN A DEPLOY STAGE
-    - docker push $IMAGE_TAG # PUSHES TO GITLAB REGISTRY
-    # RE-TAG FOR DOCKER HUB.
-    - DOCKER_HUB_IMAGE_TAG=$DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
-    - docker tag $IMAGE_TAG $DOCKER_HUB_IMAGE_TAG
-    - docker tag $IMAGE_TAG $DOCKER_HUB_IMAGE_TAG-latest
-    - docker login -u $DOCKER_USER -p $DOCKER_TOKEN
-    - docker push $DOCKER_HUB_IMAGE_TAG
-    - docker push $$DOCKER_HUB_IMAGE_TAG-latest
-  only:
-    refs:
-      - /^release+(\/|-).+$/
-      - /^production+(\/|-).+$/
-    changes:
-      - ${FILE_NAME}
-      - .gitlab-ci.yml
-
-# *---------------------------------------------------------------[ node lts ]
-build_container:release:lts:buster:
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-buster-$VERSION
-    SUFFIX_TAG: lts-buster
-    FILE_NAME: ./node-lts/latest-lts/buster.Dockerfile
-  <<: *build_release_template # THE BUILD TEMPLATE
-
-build_container:release:lts:
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-$VERSION
-    SUFFIX_TAG: lts
-    FILE_NAME: ./node-lts/latest-lts/Dockerfile
-  <<: *build_release_template
-
-# *---------------------------------------------------------------[ node 12 ]
-build_container:release:12:buster:
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:12-buster-$VERSION
-    SUFFIX_TAG: 12-buster
-    FILE_NAME: ./node-lts/12/buster.Dockerfile
-  <<: *build_release_template # THE BUILD TEMPLATE
-
-build_container:release:12:
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:12-$VERSION
-    SUFFIX_TAG: 12
-    FILE_NAME: ./node-lts/12/Dockerfile
-  <<: *build_release_template # THE BUILD TEMPLATE
-
-# *---------------------------------------------------------------[ node 10 ]
-build_container:release:10:buster:
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:10-buster-$VERSION
-    SUFFIX_TAG: 10-buster
-    FILE_NAME: ./node-lts/10/buster.Dockerfile
-  <<: *build_release_template # THE BUILD TEMPLATE
-
-build_container:release:10:
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:10-$VERSION
-    SUFFIX_TAG: 10
-    FILE_NAME: ./node-lts/10/Dockerfile
-  <<: *build_release_template # THE BUILD TEMPLATE
-
-# *---------------------------------------------------------------[ node 8 ]
-build_container:release:8:buster:
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:8-buster-$FIREBASE_TOOLS_VERSION_NODE_8
-    SUFFIX_TAG: 8-buster
-    FILE_NAME: ./node-lts/8/buster.Dockerfile
-    VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
-  <<: *build_release_template # THE BUILD TEMPLATE
-
-build_container:release:8:
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:8-$FIREBASE_TOOLS_VERSION_NODE_8
-    SUFFIX_TAG: 8
-    FILE_NAME: ./node-lts/8/Dockerfile
-    VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
-  <<: *build_release_template # THE BUILD TEMPLATE
-
-# *----------------------------------------------------[ node lts + alpine ]
-build_container:release:lts:alpine:
-  environment: release/lts-alpine-${VERSION}
-  stage: deploy
-  variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-alpine-$VERSION
-    SUFFIX_TAG: lts-alpine
-  script:
-    - docker build . --no-cache --pull
-      -t $IMAGE_TAG -t $IMAGE_TAG-latest
-      --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-      --build-arg CI_JOB_ID=$CI_JOB_ID
-      --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
-      --build-arg VCS_REF=$CI_COMMIT_SHA
-      --build-arg VERSION=$VERSION
-  after_script:
-    - echo Built $IMAGE_TAG
-    # TODO: PUT THIS IN A DEPLOY STAGE
-    - docker push $IMAGE_TAG # PUSHES TO GITLAB REGISTRY
-    # RE-TAG FOR DOCKER HUB.
-    - DOCKER_HUB_IMAGE_TAG=$DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
-    - docker tag $IMAGE_TAG $DOCKER_HUB_IMAGE_TAG
-    - docker tag $IMAGE_TAG $DOCKER_HUB_IMAGE_TAG-latest
-    - docker login -u $DOCKER_USER -p $DOCKER_TOKEN
-    - docker push $DOCKER_HUB_IMAGE_TAG
-    - docker push $$DOCKER_HUB_IMAGE_TAG-latest
-  only:
-    refs:
-      - /^release+(\/|-).+$/
-      - /^production+(\/|-).+$/
-    changes:
-      - Dockerfile
-      - .gitlab-ci.yml
+# !---------------------------------------------[ THE OTHER INCLUDED FILES ]---|
+include:
+  - local: .gitlab/ci/builds.gitlab-ci.yml # BUILD JOBS
+  - local: .gitlab/ci/deploy.gitlab-ci.yml # DEPLOYMENT JOBS
+  - local: .gitlab/ci/release.gitlab-ci.yml # RELEASE JOBS
