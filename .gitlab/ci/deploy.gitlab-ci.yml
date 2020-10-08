@@ -1,126 +1,177 @@
+# * MIT License
+
+# Copyright (c) 2020 Tim Anthony Manuel
+
+# forked from: https://github.com/AndreySenov/firebase-tools-docker
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# .variables:
+#   - &image_tag DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
+#   - &docker_hub_image_tag DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
+
 # *-----------------------------------------[ TEMPLATE FOR DEPLOY BUILD JOB ]
-deploy:template: &deploy_template
-  stage: deploy
-  # variables:
-  # `DEV_IMAGE_TAG` IS THE TAG USED IN THE BUILD STAGE. NOTICE THE -dev-
-  # DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
-  # DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
-  before_script:
-    # GET THE VERSION OF FIREBASE TOOLS FROM FILE
+.deploy:template: &deploy_template
+  stage: &stage deploy
+  variables:
+    &variables # `DEV_IMAGE_TAG` IS THE TAG USED IN THE BUILD STAGE. NOTICE THE -dev-
+    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
+    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
+  before_script: &before_script # GET THE VERSION OF FIREBASE TOOLS FROM FILE
     - VERSION=`cat FIREBASE_TOOLS_VERSION`
     - echo FIREBASE_TOOLS_VERSION $VERSION
-    # - DEV_IMAGE_TAG=$CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
-    # - DOCKER_HUB_IMAGE_TAG=$DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
-    - echo DEV_IMAGE_TAG $DEV_IMAGE_TAG
-    - echo DOCKER_HUB_IMAGE_TAG $DOCKER_HUB_IMAGE_TAG
-  script:
+  script: &script
     - docker pull $DEV_IMAGE_TAG
-    # after_script:
     - echo Pulled $DEV_IMAGE_TAG
-    # TODO: PUT THIS IN A DEPLOY STAGE
-    # - docker push $IMAGE_TAG # PUSHES TO GITLAB REGISTRY
     # RE-TAG FOR DOCKER HUB.
-    - docker tag $DEV_IMAGE_TAG $DOCKER_HUB_IMAGE_TAG
-    - docker tag $DEV_IMAGE_TAG $DOCKER_HUB_IMAGE_TAG-latest
+    - docker  tag  $DEV_IMAGE_TAG-$VERSION  $DOCKER_HUB_IMAGE_TAG-$VERSION
+    - docker  tag  $DEV_IMAGE_TAG-$VERSION  $DOCKER_HUB_IMAGE_TAG-$VERSION-latest
     - docker login -u $DOCKER_USER -p $DOCKER_TOKEN
     # THEN PUSH BOTH
-    - docker push $DOCKER_HUB_IMAGE_TAG
-    - docker push $$DOCKER_HUB_IMAGE_TAG-latest
+    - docker push $DOCKER_HUB_IMAGE_TAG-$VERSION
+    - docker push $$DOCKER_HUB_IMAGE_TAG-$VERSION-latest
   rules:
-    # IF COMMIT TAG IS (RELEASE / or -) (v) MAJOR.MINOR.PATCH https://regexr.com/51ap2
+    &rules # IF COMMIT TAG IS (RELEASE / or -) (v) MAJOR.MINOR.PATCH https://regexr.com/51ap2
     - if: $CI_COMMIT_TAG =~ /^(?:(release)(\/|-)|)+(v|)(0|[1-9]\d*).(0|[1-9]\d*)\.(0|[1-9]\d*)$/
       when: manual
 
 # *---------------------------------------------------------------[ node lts ]
 deploy:lts:buster:
+  stage: *stage
   variables:
     SUFFIX_TAG: lts-buster
     FILE_NAME: ./node-lts/latest-lts/buster.Dockerfile
-    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
-    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
-  <<: *deploy_template # THE BUILD TEMPLATE
+    <<: *variables
+    # DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev
+    # DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
+  # <<: *deploy_template # THE BUILD TEMPLATE
+  before_script: *before_script
+  script: *script
+  rules: *rules
 
 deploy:lts:
+  stage: *stage
   variables:
     # IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-$VERSION
     SUFFIX_TAG: lts
     FILE_NAME: ./node-lts/latest-lts/Dockerfile
-    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
-    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
-  <<: *deploy_template
+    # DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
+    # DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
+  # <<: *deploy_template # THE BUILD TEMPLATE
+  before_script: *before_script
+  script: *script
+  rules: *rules
 
 # *---------------------------------------------------------------[ node 12 ]
 deploy:12:buster:
+  stage: *stage
   variables:
     # IMAGE_TAG: $CI_REGISTRY_IMAGE:12-buster-$VERSION
     SUFFIX_TAG: 12-buster
     FILE_NAME: ./node-lts/12/buster.Dockerfile
-    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
-    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
-  <<: *deploy_template # THE BUILD TEMPLATE
+    # DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
+    # DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
+    # <<: *deploy_template # THE BUILD TEMPLATE
+  before_script: *before_script
+  script: *script
+  rules: *rules
 
 deploy:12:
+  stage: *stage
   variables:
     # IMAGE_TAG: $CI_REGISTRY_IMAGE:12-$VERSION
     SUFFIX_TAG: 12
     FILE_NAME: ./node-lts/12/Dockerfile
-    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
-    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
-  <<: *deploy_template # THE BUILD TEMPLATE
+    # DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
+    # DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
+  # <<: *deploy_template # THE BUILD TEMPLATE
+  before_script: *before_script
+  script: *script
+  rules: *rules
 
 # *---------------------------------------------------------------[ node 10 ]
 deploy:10:buster:
+  stage: *stage
   variables:
     # IMAGE_TAG: $CI_REGISTRY_IMAGE:10-buster-$VERSION
     SUFFIX_TAG: 10-buster
     FILE_NAME: ./node-lts/10/buster.Dockerfile
-    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
-    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
-  <<: *deploy_template # THE BUILD TEMPLATE
+    # DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
+    # DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
+  # <<: *deploy_template # THE BUILD TEMPLATE
+  before_script: *before_script
+  script: *script
+  rules: *rules
 
 deploy:10:
+  stage: *stage
   variables:
     # IMAGE_TAG: $CI_REGISTRY_IMAGE:10-$VERSION
     SUFFIX_TAG: 10
     FILE_NAME: ./node-lts/10/Dockerfile
-    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
-    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
-  <<: *deploy_template # THE BUILD TEMPLATE
+    # DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
+    # DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
+  # <<: *deploy_template # THE BUILD TEMPLATE
+  before_script: *before_script
+  script: *script
+  rules: *rules
 
 # *---------------------------------------------------------------[ node 8 ]
 deploy:8:buster:
+  stage: *stage
   variables:
     # IMAGE_TAG: $CI_REGISTRY_IMAGE:8-buster-$FIREBASE_TOOLS_VERSION_NODE_8
     SUFFIX_TAG: 8-buster
     FILE_NAME: ./node-lts/8/buster.Dockerfile
     VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
-    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
-    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
-  <<: *deploy_template # THE BUILD TEMPLATE
+    # DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
+    # DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
+  # <<: *deploy_template # THE BUILD TEMPLATE
   before_script:
     # GET THE VERSION OF FIREBASE TOOLS FROM FILE
     - VERSION=`cat FIREBASE_TOOLS_VERSION_NODE_8`
     - echo FIREBASE_TOOLS_VERSION $VERSION
-    - echo BUILDING $IMAGE_TAG
+  # <<: *deploy_template # THE BUILD TEMPLATE
+  script: *script
+  rules: *rules
 
 deploy:8:
+  stage: *stage
   variables:
     # IMAGE_TAG: $CI_REGISTRY_IMAGE:8-$FIREBASE_TOOLS_VERSION_NODE_8
     SUFFIX_TAG: 8
     FILE_NAME: ./node-lts/8/Dockerfile
     VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
-    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
-    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
+    # DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
+    # DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
   <<: *deploy_template # THE BUILD TEMPLATE
   before_script:
     # GET THE VERSION OF FIREBASE TOOLS FROM FILE
     - VERSION=`cat FIREBASE_TOOLS_VERSION_NODE_8`
     - echo FIREBASE_TOOLS_VERSION $VERSION
-    - echo BUILDING $IMAGE_TAG
+  # <<: *deploy_template # THE BUILD TEMPLATE
+  script: *script
+  rules: *rules
 
 # *----------------------------------------------------[ node lts + alpine ]
 deploy:lts:alpine:
-  stage: deploy
+  stage: *stage
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-alpine-dev-$VERSION
     SUFFIX_TAG: lts-alpine
