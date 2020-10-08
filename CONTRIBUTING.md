@@ -17,5 +17,8 @@ and let it take care of creating new branches so that branching will be consiste
 
 ### releases
 
-for releases, there will be a branch called `release/` that will have the branches
-for the release versions.
+to release, a particular commit should be tagged with any of the following:
+
+- the basic version (major.minor.patch)
+- release/major.minor.patch
+- with v (e.g., release/v8.12.0, v8.10.0)

@@ -23,9 +23,12 @@
 # SOFTWARE.
 
 # *--------------------------------------------[ TEMPLATE FOR DEV BUILD JOB ]--|
-.build:template:
-  &build_template # environment: development/${SUFFIX_TAG}-${VERSION}
+.build:template: &build_template
   stage: build
+  before_script:
+    # GET THE VERSION OF FIREBASE TOOLS FROM FILE
+    - VERSION=`cat FIREBASE_TOOLS_VERSION`
+    - echo FIREBASE_TOOLS_VERSION $VERSION
   script:
     - docker build . --no-cache --pull -t $IMAGE_TAG-dev-$VERSION
       -f ${FILE_NAME}
@@ -34,112 +37,139 @@
       --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
       --build-arg VCS_REF=$CI_COMMIT_SHA
       --build-arg VERSION=$VERSION
-  after_script:
-    - echo Built $IMAGE_TAG
-    - echo for docker $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-dev
-      # TODO: REMOVE THIS LATER
+    - echo IMAGE_TAG-dev-VERSION $IMAGE_TAG-$VERSION
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     # PUSH IMAGE TO GITLAB REGISTRY SO IT CAN BE RETRIEVED IN LATER STAGES
     - docker push $IMAGE_TAG-dev-$VERSION
   rules:
-    - if: $CI_COMMIT_BRANCH =~ /^release+(\/|-).+$/
+    - if: '$CI_COMMIT_REF_NAME =~ /^release+(\/|-).+$/'
       when: never
-    - if: $CI_COMMIT_BRANCH =~ /^production+(\/|-).+$/
+    - if: '$CI_COMMIT_REF_NAME =~ /^production+(\/|-).+$/'
       when: never
-    - if: $CI_COMMIT_BRANCH =~ /^staging+(\/|-).+$/
+    - if: '$CI_COMMIT_REF_NAME =~ /^staging+(\/|-).+$/'
       when: never
-    - if: $CI_COMMIT_BRANCH =~ /\d+\-+[\w(\-|.)]*$/
-      when: always
-    - changes:
+    - if: '$CI_COMMIT_BRANCH =~ /([1-9]\d*)+\-+([\w(\-)]+)$/'
+      exists:
         - ${FILE_NAME}
+        - 'FIREBASE_TOOLS_VERSION'
+      changes:
+        - ${FILE_NAME}
+        - 'FIREBASE_TOOLS_VERSION'
         - '.gitlab-ci.yml'
+        - '.gitlab/ci/builds.gitlab-ci.yml'
       when: always
 
 # *---------------------------------------------------------------[ node lts ]
 build_container:lts:buster:rc:
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-buster
     SUFFIX_TAG: lts-buster
     FILE_NAME: ./node-lts/latest-lts/buster.Dockerfile
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG
   <<: *build_template # THE BUILD TEMPLATE
 
 build_container:lts:rc:
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts
     SUFFIX_TAG: lts
     FILE_NAME: ./node-lts/latest-lts/Dockerfile
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG
   <<: *build_template
 
 # *---------------------------------------------------------------[ node 12 ]
 build_container:12:buster:rc:
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:12-buster
     SUFFIX_TAG: 12-buster
     FILE_NAME: ./node-lts/12/buster.Dockerfile
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG
   <<: *build_template # THE BUILD TEMPLATE
 
 build_container:12:rc:
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:12
     SUFFIX_TAG: 12
     FILE_NAME: ./node-lts/12/Dockerfile
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG
   <<: *build_template # THE BUILD TEMPLATE
 
 # *---------------------------------------------------------------[ node 10 ]
 build_container:10:buster:rc:
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:10-buster
     SUFFIX_TAG: 10-buster
     FILE_NAME: ./node-lts/10/buster.Dockerfile
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG
   <<: *build_template # THE BUILD TEMPLATE
 
 build_container:10:rc:
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:10
     SUFFIX_TAG: 10
     FILE_NAME: ./node-lts/10/Dockerfile
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG
   <<: *build_template # THE BUILD TEMPLATE
 
 # *---------------------------------------------------------------[ node 8 ]
 build_container:8:buster:rc:
   variables:
-    VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:8-buster
     SUFFIX_TAG: 8-buster
     FILE_NAME: ./node-lts/8/buster.Dockerfile
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG
   <<: *build_template # THE BUILD TEMPLATE
+  before_script:
+    # GET THE VERSION OF FIREBASE TOOLS FROM FILE
+    - VERSION=`cat FIREBASE_TOOLS_VERSION_NODE_8`
+    - echo FIREBASE_TOOLS_VERSION $VERSION
+    - echo BUILDING $IMAGE_TAG
 
 build_container:8:rc:
   variables:
-    VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:8
     SUFFIX_TAG: 8
     FILE_NAME: ./node-lts/8/Dockerfile
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG
   <<: *build_template # THE BUILD TEMPLATE
+  before_script:
+    # GET THE VERSION OF FIREBASE TOOLS FROM FILE
+    - VERSION=`cat FIREBASE_TOOLS_VERSION_NODE_8`
+    - echo FIREBASE_TOOLS_VERSION $VERSION
+    - echo BUILDING $IMAGE_TAG
 
 # *----------------------------------------------------[ node lts + alpine ]
 build_container:lts:alpine:rc:
   # environment: development/lts-alpine-rc-${VERSION}
   stage: build
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-alpine-dev-$VERSION
     SUFFIX_TAG: lts-alpine-dev
+    FILE_NAME: Dockerfile
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG
+  before_script:
+    # GET THE VERSION OF FIREBASE TOOLS FROM FILE
+    - VERSION=`cat FIREBASE_TOOLS_VERSION`
+    - echo FIREBASE_TOOLS_VERSION $VERSION
   script:
-    - docker build . --no-cache --pull -t $IMAGE_TAG
+    - echo BUILDING $IMAGE_TAG-dev-$VERSION
+    - docker build . --no-cache --pull
+      -t $IMAGE_TAG-dev-$VERSION
       --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
       --build-arg CI_JOB_ID=$CI_JOB_ID
       --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
       --build-arg VCS_REF=$CI_COMMIT_SHA
       --build-arg VERSION=$VERSION
-  after_script:
-    - echo Built $IMAGE_TAG
-    - echo for docker $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
-      # TODO: REMOVE THIS LATER
+    - echo IMAGE_TAG-dev-VERSION $IMAGE_TAG-dev-$VERSION
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     # PUSH IMAGE TO GITLAB REGISTRY
-    - docker push $IMAGE_TAG
-  only:
-    changes:
-      - Dockerfile
-      - .gitlab-ci.yml
-  except:
-    - /^release+(\/|-).+$/
+    - docker push $IMAGE_TAG-dev-$VERSION
+
+  rules:
+    - if: '$CI_COMMIT_REF_NAME =~ /^release+(\/|-).+$/'
+      when: never
+    - if: '$CI_COMMIT_REF_NAME =~ /^production+(\/|-).+$/'
+      when: never
+    - if: '$CI_COMMIT_REF_NAME =~ /^staging+(\/|-).+$/'
+      when: never
+    - if: '$CI_COMMIT_BRANCH =~ /([1-9]\d*)+\-+([\w(\-)]+)$/'
+      exists:
+        - Dockerfile
+        - 'FIREBASE_TOOLS_VERSION'
+      changes:
+        - Dockerfile
+        - 'FIREBASE_TOOLS_VERSION'
+        - '.gitlab-ci.yml'
+        - '.gitlab/ci/builds.gitlab-ci.yml'
+      when: always
 #! ---------------------------------------------------------------------[ END ]-
