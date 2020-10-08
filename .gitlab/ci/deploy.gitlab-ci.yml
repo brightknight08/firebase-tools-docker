@@ -1,122 +1,143 @@
+# * MIT License
+
+# Copyright (c) 2020 Tim Anthony Manuel
+
+# forked from: https://github.com/AndreySenov/firebase-tools-docker
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 # *-----------------------------------------[ TEMPLATE FOR DEPLOY BUILD JOB ]
-deploy:template: &deploy_template
-  stage: deploy
-  variables:
-    # `DEV_IMAGE_TAG` IS THE TAG USED IN THE BUILD STAGE. NOTICE THE -dev-
-    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
-    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
-  script:
-    - docker --pull -t $DEV_IMAGE_TAG
-  after_script:
-    - echo Pulled $DEV_IMAGE_TAG
-    # TODO: PUT THIS IN A DEPLOY STAGE
-    # - docker push $IMAGE_TAG # PUSHES TO GITLAB REGISTRY
+.deploy:template: &deploy_template
+  stage: &stage deploy
+  before_script: &before_script # GET THE VERSION OF FIREBASE TOOLS FROM FILE
+    - VERSION=`cat FIREBASE_TOOLS_VERSION`
+    - echo FIREBASE_TOOLS_VERSION $VERSION
+    - echo DEV_IMAGE_TAG $DEV_IMAGE_TAG
+    - echo DOCKER_HUB_IMAGE_TAG $DOCKER_HUB_IMAGE_TAG
+  script: &script
+    - docker pull $DEV_IMAGE_TAG-$VERSION
     # RE-TAG FOR DOCKER HUB.
-    - docker tag $DEV_IMAGE_TAG $DOCKER_HUB_IMAGE_TAG
-    - docker tag $DEV_IMAGE_TAG $DOCKER_HUB_IMAGE_TAG-latest
+    - docker  tag  $DEV_IMAGE_TAG-$VERSION  $DOCKER_HUB_IMAGE_TAG-$VERSION
+    - docker  tag  $DEV_IMAGE_TAG-$VERSION  $DOCKER_HUB_IMAGE_TAG-$VERSION-latest
     - docker login -u $DOCKER_USER -p $DOCKER_TOKEN
     # THEN PUSH BOTH
-    - docker push $DOCKER_HUB_IMAGE_TAG
-    - docker push $$DOCKER_HUB_IMAGE_TAG-latest
+    - docker push $DOCKER_HUB_IMAGE_TAG-$VERSION
+    - docker push $DOCKER_HUB_IMAGE_TAG-$VERSION-latest
   rules:
-    # IF COMMIT TAG IS RELEASE WITH MAJOR.MINOR.PATCH https://regexr.com/51ap2
-    - if: $CI_COMMIT_TAG =~ /^release(\/|-)+(|v)(0|[1-9]\d*).(0|[1-9]\d*)\.(0|[1-9]\d*)$/
-      when: manual
-    - if: $CI_COMMIT_TAG =~ /^(|v)(0|[1-9]\d*).(0|[1-9]\d*)\.(0|[1-9]\d*)$/
+    &rules # IF COMMIT TAG IS (RELEASE / or -) (v) MAJOR.MINOR.PATCH https://regexr.com/51ap2
+    - if: $CI_COMMIT_TAG =~ /^(?:(release)(\/|-)|)+(v|)(0|[1-9]\d*).(0|[1-9]\d*)\.(0|[1-9]\d*)$/
       when: manual
 
 # *---------------------------------------------------------------[ node lts ]
 deploy:lts:buster:
   variables:
-    # DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-buster-dev-$VERSION
     SUFFIX_TAG: lts-buster
-    FILE_NAME: ./node-lts/latest-lts/buster.Dockerfile
+    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev
+    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
   <<: *deploy_template # THE BUILD TEMPLATE
 
 deploy:lts:
   variables:
-    # IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-$VERSION
     SUFFIX_TAG: lts
-    FILE_NAME: ./node-lts/latest-lts/Dockerfile
-  <<: *deploy_template
+    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev
+    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
+  <<: *deploy_template # THE BUILD TEMPLATE
 
 # *---------------------------------------------------------------[ node 12 ]
 deploy:12:buster:
   variables:
-    # IMAGE_TAG: $CI_REGISTRY_IMAGE:12-buster-$VERSION
     SUFFIX_TAG: 12-buster
-    FILE_NAME: ./node-lts/12/buster.Dockerfile
+    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev
+    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
   <<: *deploy_template # THE BUILD TEMPLATE
 
 deploy:12:
   variables:
-    # IMAGE_TAG: $CI_REGISTRY_IMAGE:12-$VERSION
     SUFFIX_TAG: 12
-    FILE_NAME: ./node-lts/12/Dockerfile
+    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev
+    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
   <<: *deploy_template # THE BUILD TEMPLATE
 
 # *---------------------------------------------------------------[ node 10 ]
 deploy:10:buster:
   variables:
-    # IMAGE_TAG: $CI_REGISTRY_IMAGE:10-buster-$VERSION
     SUFFIX_TAG: 10-buster
-    FILE_NAME: ./node-lts/10/buster.Dockerfile
+    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev
+    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
   <<: *deploy_template # THE BUILD TEMPLATE
 
 deploy:10:
   variables:
-    # IMAGE_TAG: $CI_REGISTRY_IMAGE:10-$VERSION
     SUFFIX_TAG: 10
-    FILE_NAME: ./node-lts/10/Dockerfile
+    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev
+    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
   <<: *deploy_template # THE BUILD TEMPLATE
 
 # *---------------------------------------------------------------[ node 8 ]
 deploy:8:buster:
   variables:
-    # IMAGE_TAG: $CI_REGISTRY_IMAGE:8-buster-$FIREBASE_TOOLS_VERSION_NODE_8
     SUFFIX_TAG: 8-buster
-    FILE_NAME: ./node-lts/8/buster.Dockerfile
     VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
+    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev
+    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
   <<: *deploy_template # THE BUILD TEMPLATE
+  before_script:
+    # GET THE VERSION OF FIREBASE TOOLS FROM FILE
+    - VERSION=`cat FIREBASE_TOOLS_VERSION_NODE_8`
+    - echo FIREBASE_TOOLS_VERSION $VERSION
 
 deploy:8:
   variables:
-    # IMAGE_TAG: $CI_REGISTRY_IMAGE:8-$FIREBASE_TOOLS_VERSION_NODE_8
     SUFFIX_TAG: 8
-    FILE_NAME: ./node-lts/8/Dockerfile
     VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
+    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev
+    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
   <<: *deploy_template # THE BUILD TEMPLATE
+  before_script:
+    # GET THE VERSION OF FIREBASE TOOLS FROM FILE
+    - VERSION=`cat FIREBASE_TOOLS_VERSION_NODE_8`
+    - echo FIREBASE_TOOLS_VERSION $VERSION
 
 # *----------------------------------------------------[ node lts + alpine ]
 deploy:lts:alpine:
-  environment: staging/lts-alpine-${VERSION}
   stage: deploy
   variables:
-    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-alpine-dev-$VERSION
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-alpine-dev
     SUFFIX_TAG: lts-alpine
+    DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev
+    DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
+  before_script:
+    # GET THE VERSION OF FIREBASE TOOLS FROM FILE
+    - VERSION=`cat FIREBASE_TOOLS_VERSION`
+    - echo FIREBASE_TOOLS_VERSION $VERSION
+    - echo DEV_IMAGE_TAG $DEV_IMAGE_TAG
+    - echo DOCKER_HUB_IMAGE_TAG $DOCKER_HUB_IMAGE_TAG
   script:
-    - docker build . --no-cache --pull
-      -t $IMAGE_TAG -t $IMAGE_TAG-latest
-      --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-      --build-arg CI_JOB_ID=$CI_JOB_ID
-      --build-arg CI_PIPELINE_ID=$CI_PIPELINE_ID
-      --build-arg VCS_REF=$CI_COMMIT_SHA
-      --build-arg VERSION=$VERSION
-  after_script:
-    - echo Built $IMAGE_TAG
-    # TODO: PUT THIS IN A DEPLOY STAGE
-    - docker push $IMAGE_TAG # PUSHES TO GITLAB REGISTRY
+    - docker pull $DEV_IMAGE_TAG-$VERSION
     # RE-TAG FOR DOCKER HUB.
-    - DOCKER_HUB_IMAGE_TAG=$DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG-$VERSION
-    - docker tag $IMAGE_TAG $DOCKER_HUB_IMAGE_TAG
-    - docker tag $IMAGE_TAG $DOCKER_HUB_IMAGE_TAG-latest
+    - docker tag  $IMAGE_TAG-$VERSION  $DOCKER_HUB_IMAGE_TAG-$VERSION
+    - docker tag  $IMAGE_TAG-$VERSION  $DOCKER_HUB_IMAGE_TAG-$VERSION-latest
     - docker login -u $DOCKER_USER -p $DOCKER_TOKEN
-    - docker push $DOCKER_HUB_IMAGE_TAG
-    - docker push $$DOCKER_HUB_IMAGE_TAG-latest
-  only:
-    refs:
-      - /^staging+(\/|-).+$/
-    changes:
-      - Dockerfile
-      - .gitlab-ci.yml
+    - docker push $DOCKER_HUB_IMAGE_TAG-$VERSION
+    - docker push $DOCKER_HUB_IMAGE_TAG-$VERSION-latest
+  rules:
+    # IF COMMIT TAG IS (RELEASE / or -) (v) MAJOR.MINOR.PATCH https://regexr.com/51ap2
+    - if: $CI_COMMIT_TAG =~ /^(?:(release)(\/|-)|)+(v|)(0|[1-9]\d*).(0|[1-9]\d*)\.(0|[1-9]\d*)$/
+      when: manual
 #! ---------------------------------------------------------------------[ END ]-
