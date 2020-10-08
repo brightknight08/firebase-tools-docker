@@ -51,9 +51,6 @@ deploy:lts:buster:
     DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev
     DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
   <<: *deploy_template # THE BUILD TEMPLATE
-  # before_script: *before_script
-  # script: *script
-  # rules: *rules
 
 deploy:lts:
   variables:
@@ -61,9 +58,6 @@ deploy:lts:
     DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev
     DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
   <<: *deploy_template # THE BUILD TEMPLATE
-  # before_script: *before_script
-  # script: *script
-  # rules: *rules
 
 # *---------------------------------------------------------------[ node 12 ]
 deploy:12:buster:
@@ -72,9 +66,6 @@ deploy:12:buster:
     DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev
     DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
   <<: *deploy_template # THE BUILD TEMPLATE
-  # before_script: *before_script
-  # script: *script
-  # rules: *rules
 
 deploy:12:
   variables:
@@ -82,9 +73,6 @@ deploy:12:
     DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev
     DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
   <<: *deploy_template # THE BUILD TEMPLATE
-  # before_script: *before_script
-  # script: *script
-  # rules: *rules
 
 # *---------------------------------------------------------------[ node 10 ]
 deploy:10:buster:
@@ -93,9 +81,6 @@ deploy:10:buster:
     DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev
     DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
   <<: *deploy_template # THE BUILD TEMPLATE
-  # before_script: *before_script
-  # script: *script
-  # rules: *rules
 
 deploy:10:
   variables:
@@ -103,9 +88,6 @@ deploy:10:
     DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev
     DOCKER_HUB_IMAGE_TAG: $DOCKER_HUB_ORG/$CI_PROJECT_NAME:$SUFFIX_TAG
   <<: *deploy_template # THE BUILD TEMPLATE
-  # before_script: *before_script
-  # script: *script
-  # rules: *rules
 
 # *---------------------------------------------------------------[ node 8 ]
 deploy:8:buster:
@@ -119,8 +101,6 @@ deploy:8:buster:
     # GET THE VERSION OF FIREBASE TOOLS FROM FILE
     - VERSION=`cat FIREBASE_TOOLS_VERSION_NODE_8`
     - echo FIREBASE_TOOLS_VERSION $VERSION
-  # script: *script
-  # rules: *rules
 
 deploy:8:
   variables:
@@ -133,8 +113,6 @@ deploy:8:
     # GET THE VERSION OF FIREBASE TOOLS FROM FILE
     - VERSION=`cat FIREBASE_TOOLS_VERSION_NODE_8`
     - echo FIREBASE_TOOLS_VERSION $VERSION
-  # script: *script
-  # rules: *rules
 
 # *----------------------------------------------------[ node lts + alpine ]
 deploy:lts:alpine:
