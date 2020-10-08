@@ -46,7 +46,6 @@
 
 # *---------------------------------------------------------------[ node lts ]
 deploy:lts:buster:
-  stage: *stage
   variables:
     SUFFIX_TAG: lts-buster
     DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
@@ -57,7 +56,6 @@ deploy:lts:buster:
   # rules: *rules
 
 deploy:lts:
-  stage: *stage
   variables:
     SUFFIX_TAG: lts
     DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
@@ -69,7 +67,6 @@ deploy:lts:
 
 # *---------------------------------------------------------------[ node 12 ]
 deploy:12:buster:
-  stage: *stage
   variables:
     SUFFIX_TAG: 12-buster
     DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
@@ -80,7 +77,6 @@ deploy:12:buster:
   # rules: *rules
 
 deploy:12:
-  stage: *stage
   variables:
     SUFFIX_TAG: 12
     DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
@@ -92,7 +88,6 @@ deploy:12:
 
 # *---------------------------------------------------------------[ node 10 ]
 deploy:10:buster:
-  stage: *stage
   variables:
     SUFFIX_TAG: 10-buster
     DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
@@ -103,7 +98,6 @@ deploy:10:buster:
   # rules: *rules
 
 deploy:10:
-  stage: *stage
   variables:
     SUFFIX_TAG: 10
     DEV_IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG-dev-$VERSION
@@ -115,7 +109,6 @@ deploy:10:
 
 # *---------------------------------------------------------------[ node 8 ]
 deploy:8:buster:
-  stage: *stage
   variables:
     SUFFIX_TAG: 8-buster
     VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
@@ -130,7 +123,6 @@ deploy:8:buster:
   # rules: *rules
 
 deploy:8:
-  stage: *stage
   variables:
     SUFFIX_TAG: 8
     VERSION: $FIREBASE_TOOLS_VERSION_NODE_8
@@ -146,7 +138,7 @@ deploy:8:
 
 # *----------------------------------------------------[ node lts + alpine ]
 deploy:lts:alpine:
-  stage: *stage
+  stage: deploy
   variables:
     IMAGE_TAG: $CI_REGISTRY_IMAGE:lts-alpine-dev-$VERSION
     SUFFIX_TAG: lts-alpine
