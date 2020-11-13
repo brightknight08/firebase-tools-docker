@@ -134,7 +134,7 @@ build_container:lts:alpine:rc:
   # environment: development/lts-alpine-rc-${VERSION}
   stage: build
   variables:
-    SUFFIX_TAG: lts-alpine-dev
+    SUFFIX_TAG: lts-alpine
     FILE_NAME: Dockerfile
     IMAGE_TAG: $CI_REGISTRY_IMAGE:$SUFFIX_TAG
   before_script:
